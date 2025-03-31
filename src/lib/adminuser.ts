@@ -1,4 +1,4 @@
-import { userType } from "@/types/user"
+
 import axios from "axios"
 export const useCreateUser= async(data:userType)=> {
    

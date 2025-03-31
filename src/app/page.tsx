@@ -1,10 +1,9 @@
-import Login from "@/components/login";
-
+import HomePag from "./component/Home";
 
 export default function Home() {
   return (
     <>
-      <Login/>
+     <HomePag/>
     </>
   );
 }
