@@ -4,7 +4,7 @@ import { IoIosArrowForward } from "react-icons/io";
 import Link from "next/link";
 import { IconType } from "react-icons";
 import { useAppDispatch, useAppSelector } from "@/redux/store";
-import { setIcon, setTitle } from "@/redux/slice/stateSlice";
+import { setIcon, setSubTitle, setTitle } from "@/redux/slice/stateSlice";
 type ModelType={
     title:string,
     compItem:string[],
@@ -15,6 +15,10 @@ function ModelComp({title,Icon,compItem,IconName}:ModelType) {
     const [innerComp,setInnerComp]= useState(0)
     const dispatch= useAppDispatch()
     const getTitle= useAppSelector((state)=> state.title.title)
+    const handleSubtitle=({eh,_index}:{eh:string,_index:number})=> {
+      dispatch(setSubTitle(eh))
+      setInnerComp(_index)
+    }
     const itemsComp= compItem.map((eh,_index)=> <div key={_index} className="flex gap-2 items-center">
     <svg className="flex items-center justify-center" width="26" height="12">
       <line
@@ -27,7 +31,7 @@ function ModelComp({title,Icon,compItem,IconName}:ModelType) {
       />
       <circle cx="15" cy="6" r="4" fill="white" />
     </svg>
-    <Link href="" onClick={()=> setInnerComp(_index)} className={`${innerComp===_index?"text-white":"text-white/70"}`}>{eh}</Link>
+    <Link href="" onClick={()=> handleSubtitle({eh,_index}) } className={`text-nowrap ${innerComp===_index?"text-white":"text-white/70"}`}>{eh}</Link>
   </div>)
   return (
     <div className="flex flex-col w-full ">

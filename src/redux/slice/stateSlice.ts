@@ -4,10 +4,12 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 interface stateSliceType{
     title:string
     Icon:string
+    subTitle:string
 }
 const initialState:stateSliceType={
     title:"Dashboard",
-    Icon:"PiHouseThin"
+    Icon:"PiHouseThin",
+    subTitle:"Create Product",
 }
 const stateSlice=createSlice({
     name:"statetitle",
@@ -18,8 +20,11 @@ const stateSlice=createSlice({
         },
         setIcon(state,action:PayloadAction<string>){
             state.Icon=action.payload
+        },
+        setSubTitle(state,action:PayloadAction<string>){
+            state.subTitle=action.payload
         }
     }
 })
-export const {setTitle,setIcon}= stateSlice.actions
+export const {setTitle,setIcon,setSubTitle}= stateSlice.actions
 export default stateSlice.reducer
