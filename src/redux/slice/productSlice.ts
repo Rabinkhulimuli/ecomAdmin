@@ -18,10 +18,17 @@ export const productApi= createApi({
             query:(data)=> ({
                 url:"/admin/create-category",
                 method:'POST',
-                body:data
+                body:data,
+                headers:{
+                    'Content-Type':'application/json'
+                }
             })
+        }),
+        getAllCategory:builder.query<categoryType[],void>({
+            query:()=> "/get-all-category",
+            providesTags:['Category'],
         })
     })
 })
-export const {useCreateProductMutation,useCreateCategoryMutation}= productApi
+export const {useCreateProductMutation,useCreateCategoryMutation,useGetAllCategoryQuery}= productApi
 export default productApi

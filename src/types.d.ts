@@ -12,4 +12,7 @@ type userType={
         images: File[];
         discount: string;
     }
-    
+    type categoryType={
+        id:string,
+        name:string
+    }

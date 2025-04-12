@@ -1,43 +1,56 @@
 "use client"
-import { useCreateProductMutation } from "@/redux/slice/productSlice";
+import { useCreateProductMutation, useGetAllCategoryQuery } from "@/redux/slice/productSlice";
 import { Field, Form, Formik } from "formik";
 import Image from "next/image";
 import React, { useState } from "react";
 
+type FormValues = {
+  name: string;
+  description: string;
+  price: string;
+  stock: string;
+  category: string;
+  images: File[];
+  discount: string;
+};
+
 export default function Product() {
   const [previews, setPreviews] = useState<string[]>([]);
- const [createProduct] = useCreateProductMutation()
- const[image,setImage]= useState<File[]>([])
-  const initialValues = {
+  const [createProduct] = useCreateProductMutation();
+  const { data: categories = [], isLoading } = useGetAllCategoryQuery();
+  const [files, setFiles] = useState<File[]>([]);
+
+  const initialValues: FormValues = {
     name: "",
     description: "",
     price: "",
     stock: "",
-    category: "men", // Set default value
-    images: [] as File[],
+    category: categories.length > 0 ? categories[0].name : "",
+    images: [],
     discount: "",
   };
 
-  const handleSubmit = async (values: typeof initialValues) => {
-    console.log("image",image)
+  const handleSubmit = async (values: FormValues) => {
     const formData = new FormData();
-  
-    // Append all fields
-    const imagesArray = Array.isArray(values.images) ? values.images : [];
-    console.log("image array",imagesArray)
+    
+    // Append all fields except images
     Object.entries(values).forEach(([key, value]) => {
-      if (key === "images") {
-      
-        imagesArray.forEach((file) => formData.append("images", file));
-      } else {
+      if (key !== "images") {
         formData.append(key, String(value));
       }
     });
 
+    // Append all image files
+    files.forEach((file) => {
+      formData.append("images", file);
+    });
+
     try {
-         const data =await createProduct(formData).unwrap()
-         console.log(data)
+      await createProduct(formData).unwrap();
       alert("Product created successfully!");
+      // Reset form
+      setPreviews([]);
+      setFiles([]);
     } catch (error) {
       console.error("Error:", error);
       alert("Error creating product");
@@ -46,29 +59,37 @@ export default function Product() {
 
   const handleImageChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    setFieldValue: (field: string, value: any) => void
+    setFieldValue: (field: string, value:unknown) => void
   ) => {
     const files = e.target.files;
     if (!files) return;
-  
-    const newImages = Array.from(files);
-    const updatedImage=[...image,...newImages]
-    setImage(updatedImage)
-    setFieldValue("images", updatedImage);
-  
+
+    const newFiles = Array.from(files);
+    setFiles(prev => [...prev, ...newFiles]);
+    setFieldValue("images", [...files, ...newFiles]);
+
     // Generate previews
-    const newPreviews: string[] = [];
     Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onload = () => {
-        newPreviews.push(reader.result as string);
-        if (newPreviews.length === files.length) {
-          setPreviews((prevPreview)=> [...prevPreview,...newPreviews]); // Replace old previews with new ones
-        }
+        setPreviews(prev => [...prev, reader.result as string]);
       };
       reader.readAsDataURL(file);
     });
   };
+
+  const removeImage = (index: number, setFieldValue: (field: string, value: unknown) => void) => {
+    const updatedPreviews = [...previews];
+    updatedPreviews.splice(index, 1);
+    setPreviews(updatedPreviews);
+
+    const updatedFiles = [...files];
+    updatedFiles.splice(index, 1);
+    setFiles(updatedFiles);
+    setFieldValue("images", updatedFiles);
+  };
+
+  if (isLoading) return <div>Loading categories...</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -78,7 +99,7 @@ export default function Product() {
       </div>
 
       <Formik initialValues={initialValues} onSubmit={handleSubmit}>
-        {({ isSubmitting, setFieldValue ,values}) => (
+        {({ isSubmitting, setFieldValue }) => (
           <Form className="space-y-6">
             {/* Name and Description Section */}
             <div className="bg-white p-6 shadow-md rounded-md">
@@ -87,10 +108,7 @@ export default function Product() {
               </h2>
               <div className="mt-4 space-y-4">
                 <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                     Product Name
                   </label>
                   <Field
@@ -102,10 +120,7 @@ export default function Product() {
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
                     Product Description
                   </label>
                   <Field
@@ -126,10 +141,7 @@ export default function Product() {
               </h2>
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label
-                    htmlFor="category"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label htmlFor="category" className="block text-sm font-medium text-gray-700">
                     Category
                   </label>
                   <Field
@@ -138,18 +150,16 @@ export default function Product() {
                     id="category"
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   >
-                    <option value="men">Men</option>
-                    <option value="women">Women</option>
-                    <option value="kids">Kids</option>
-                    <option value="accessories">Accessories</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
                   </Field>
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="price"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label htmlFor="price" className="block text-sm font-medium text-gray-700">
                     Price
                   </label>
                   <Field
@@ -161,10 +171,7 @@ export default function Product() {
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="stock"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
                     Inventory
                   </label>
                   <Field
@@ -176,10 +183,7 @@ export default function Product() {
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="discount"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label htmlFor="discount" className="block text-sm font-medium text-gray-700">
                     Discount (%)
                   </label>
                   <Field
@@ -208,7 +212,6 @@ export default function Product() {
                   multiple
                   accept="image/*"
                   onChange={(e) => handleImageChange(e, setFieldValue)}
-                  
                   className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                 />
 
@@ -218,7 +221,7 @@ export default function Product() {
                     <h3 className="text-sm font-medium text-gray-700 mb-2">
                       Selected Images:
                     </h3>
-                    <div className="flex  gap-4">
+                    <div className="flex flex-wrap gap-4">
                       {previews.map((preview, index) => (
                         <div key={index} className="relative">
                           <Image
@@ -227,23 +230,14 @@ export default function Product() {
                             className="w-24 h-24 object-cover rounded-md border border-gray-200"
                             width={96}
                             height={96}
-                            
                           />
                           <button
                             type="button"
-                            onClick={() => {
-                              const updatedPreviews = [...previews];
-                              updatedPreviews.splice(index, 1);
-                              setPreviews(updatedPreviews);
-
-                              const updatedImages = Array.isArray(values.images) ? [...values.images] : [];
-                              updatedImages.splice(index, 1);
-                              setFieldValue("images", updatedImages);
-                            }}
+                            onClick={() => removeImage(index, setFieldValue)}
                             className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center transform translate-x-1/2 -translate-y-1/2"
                           >
                             ×
-                          </button> 
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -262,7 +256,6 @@ export default function Product() {
                 {isSubmitting ? "Saving..." : "Save Product"}
               </button>
             </div>
-           
           </Form>
         )}
       </Formik>
