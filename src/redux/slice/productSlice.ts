@@ -25,8 +25,8 @@ export const productApi= createApi({
             })
         }),
         getAllCategory:builder.query<categoryType[],void>({
-            query:()=> "/get-all-category",
-            providesTags:['Category'],
+            query:()=> "/admin/get-all-category",
+          
         })
     })
 })

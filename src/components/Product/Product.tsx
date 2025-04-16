@@ -4,7 +4,7 @@ import { Field, Form, Formik } from "formik";
 import Image from "next/image";
 import React, { useState } from "react";
 
-type FormValues = {
+export type FormValues = {
   name: string;
   description: string;
   price: string;
@@ -12,6 +12,7 @@ type FormValues = {
   category: string;
   images: File[];
   discount: string;
+  imageUrl?:string[];
 };
 
 export default function Product() {
@@ -19,7 +20,7 @@ export default function Product() {
   const [createProduct] = useCreateProductMutation();
   const { data: categories = [], isLoading } = useGetAllCategoryQuery();
   const [files, setFiles] = useState<File[]>([]);
-
+console.log("categories",categories)
   const initialValues: FormValues = {
     name: "",
     description: "",
@@ -29,7 +30,6 @@ export default function Product() {
     images: [],
     discount: "",
   };
-
   const handleSubmit = async (values: FormValues) => {
     const formData = new FormData();
     
@@ -88,8 +88,6 @@ export default function Product() {
     setFiles(updatedFiles);
     setFieldValue("images", updatedFiles);
   };
-
-  if (isLoading) return <div>Loading categories...</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -150,8 +148,10 @@ export default function Product() {
                     id="category"
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   >
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.name}>
+                    <option value="" >Choose</option>
+                   {isLoading&&<option>loading...</option> }
+                   {!isLoading&& categories.map((category) => (
+                      <option key={category.id} value={category.name} className="capitalize">
                         {category.name}
                       </option>
                     ))}
